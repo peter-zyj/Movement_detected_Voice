@@ -28,10 +28,11 @@ long unsigned int pause = 5000;
 boolean lockLow = true;
 boolean takeLowTime; 
 boolean HornOn = false;
+boolean itr = false;
 
-int pirPin = 9;    //the digital pin connected to the PIR sensor's output
-int ledPin = 7;
-int hornPin = 4;
+int pirPin = 2;    //the digital pin connected to the PIR sensor's output
+int ledPin = 13;
+int hornPin = 7;
 
 
 
@@ -60,20 +61,28 @@ void setup(){
 ////////////////////////////
 //LOOP
 void loop(){
-      
-     if(HornOn){
-       if(millis() - HornTime > 10*1000){
+
+     if(HornOn && !itr){
+//       Serial.print("diff::");
+//       Serial.println(millis() - HornTime);
+       if((millis() - HornTime) > 10000){
          digitalWrite(hornPin, LOW);
+         HornOn = false;
+         itr = true;
+         Serial.print("debug:horn-timeout::");
+         Serial.println(HornOn);
        }
-       HornOn = false;
      }
       
      if(digitalRead(pirPin) == HIGH){
        digitalWrite(ledPin, HIGH);   //the led visualizes the sensors output pin state
-       if(!HornOn){
+       if(!HornOn && !itr){
          digitalWrite(hornPin, HIGH);  //this is the one time triggered voice
          HornTime = millis();
-         HornOne = true;
+         HornOn = true;
+         Serial.print("debug:horn-timein::");
+         Serial.println(HornOn);
+         Serial.println(HornTime);
        }
         
        if(lockLow){  
@@ -100,7 +109,8 @@ void loop(){
        if(!lockLow && millis() - lowIn > pause){  
            //makes sure this block of code is only executed again after 
            //a new motion sequence has been detected
-           lockLow = true;                        
+           lockLow = true;  
+           itr = false;           
            Serial.print("motion ended at ");      //output
            Serial.print((millis() - pause)/1000);
            Serial.println(" sec");
@@ -108,4 +118,3 @@ void loop(){
            }
        }
   }
-
